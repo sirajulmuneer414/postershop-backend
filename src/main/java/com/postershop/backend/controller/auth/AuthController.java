@@ -2,6 +2,9 @@ package com.postershop.backend.controller.auth;
 
 import com.postershop.backend.dto.auth.LoginRequest;
 import com.postershop.backend.service.authentication.AuthService;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,18 +24,21 @@ public class AuthController {
 
     // Endpoint for user login
     @PostMapping("/login")
-    public String login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
 
-        return authService.loginService(loginRequest.getUsername(), loginRequest.getPassword());
+        String token = authService.loginService(loginRequest.getUsername(), loginRequest.getPassword());
+
+        return ResponseEntity.ok(token);
 
     }
 
     // Endpoint for user registration (CUSTOMER)
     @PostMapping("/register")
-    public String register(@RequestBody LoginRequest registerRequest) {
+    public ResponseEntity<String> register(@RequestBody LoginRequest registerRequest) {
 
-        return authService.registerService(registerRequest.getUsername(), registerRequest.getPassword());
+        String message = authService.registerService(registerRequest.getUsername(), registerRequest.getPassword());
 
+        return new ResponseEntity<>(message, HttpStatus.CREATED);
     }
 
 }
