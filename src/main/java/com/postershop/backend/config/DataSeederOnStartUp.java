@@ -33,7 +33,7 @@ public class DataSeederOnStartUp implements CommandLineRunner {
     public void run(String... args) throws Exception {
 
         if(userRepository.findByUsername("admin").isEmpty()) {
-            var adminUser = new User();
+            User adminUser = new User();
             adminUser.setUsername(ADMIN_USERNAME);
             adminUser.setPassword(passwordEncoder.encode(ADMIN_PASSWORD));
             adminUser.setRole(Role.ADMIN);
