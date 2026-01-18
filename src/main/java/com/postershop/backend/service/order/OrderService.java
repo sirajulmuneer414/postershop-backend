@@ -1,7 +1,5 @@
 package com.postershop.backend.service.order;
 
-    // Service interface for managing orders in the poster shop application.
-
 import com.postershop.backend.dto.order.OrderRequest;
 import com.postershop.backend.entity.ShopOrder;
 import com.postershop.backend.entity.enums.OrderStatus;
@@ -10,7 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+    // Service interface for managing orders in the poster shop application.
+
 public interface OrderService {
+
     @Transactional
     ShopOrder placeOrder(OrderRequest request);
 
@@ -22,7 +23,6 @@ public interface OrderService {
     @Transactional
     ShopOrder updateOrderStatus(Long orderId, OrderStatus newStatus);
 
-    // Optional: Admin might want to see ALL orders in the system, not just their own
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     @Transactional(readOnly = true)
     List<ShopOrder> getAllOrders();
