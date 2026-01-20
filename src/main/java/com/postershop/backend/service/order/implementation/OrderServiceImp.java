@@ -82,6 +82,7 @@ public class OrderServiceImp implements OrderService {
         Payment payment = new Payment();
         payment.setCardNumber(request.cardNumber());
         payment.setCardHolderName(request.cardHolder());
+        payment.setExpiryDate(request.expiryDate());
         order.setPayment(payment);
 
         return orderRepository.save(order);
