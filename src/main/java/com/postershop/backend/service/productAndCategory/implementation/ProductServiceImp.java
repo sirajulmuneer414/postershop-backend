@@ -6,9 +6,11 @@ import com.postershop.backend.entity.enums.AvailabilityStatus;
 import com.postershop.backend.repository.CategoryRepository;
 import com.postershop.backend.repository.ProductRepository;
 import com.postershop.backend.service.productAndCategory.ProductService;
+import com.postershop.backend.util.CloudinaryService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -17,8 +19,10 @@ public class ProductServiceImp implements ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final CloudinaryService cloudinaryService;
 
-    public ProductServiceImp(ProductRepository productRepository, CategoryRepository categoryRepository) {
+    public ProductServiceImp(ProductRepository productRepository, CategoryRepository categoryRepository, CloudinaryService cloudinaryService) {
+        this.cloudinaryService = cloudinaryService;
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
     }
@@ -49,10 +53,15 @@ public class ProductServiceImp implements ProductService {
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     @Transactional
     @Override
-    public Product createProduct(Product product, Long categoryId) {
+    public Product createProduct(Product product, MultipartFile image, Long categoryId) {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + categoryId));
         product.setCategory(category);
+
+        if (image != null && !image.isEmpty()) {
+            String imageUrl = cloudinaryService.uploadImage(image);
+            product.setImageUrl(imageUrl);
+        }
         product.setStatus(AvailabilityStatus.AVAILABLE);
         return productRepository.save(product);
     }
@@ -95,4 +104,24 @@ public class ProductServiceImp implements ProductService {
         return productRepository.save(existingProduct);
     }
 
+
+    /**
+     * Deletes a product by its ID.
+     *
+     * @param id the ID of the product to be deleted
+     *
+     * @throws RuntimeException if no product is found with the given ID
+     */
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    @Transactional
+    @Override
+    public void deleteProduct(Long id) {
+        if (!productRepository.existsById(id)) {
+            throw new RuntimeException("Product not found");
+        }
+
+        Product product = productRepository.findById(id).orElseThrow(() -> new RuntimeException("Product not found"));
+        cloudinaryService.deleteImage(product.getImageUrl());
+        productRepository.delete(product);
+    }
 }

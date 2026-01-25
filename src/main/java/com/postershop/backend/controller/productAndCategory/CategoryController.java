@@ -54,4 +54,14 @@ public class CategoryController {
         log.info("Updated category with ID: {}", category.getId());
         return ResponseEntity.ok(category);
     }
+
+
+    // Delete category : ADMIN ONLY
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
+        log.info("Received request to delete category ID: {}", id);
+        categoryService.deleteCategory(id);
+        return ResponseEntity.noContent().build();
+    }
+
 }

@@ -1,11 +1,14 @@
 package com.postershop.backend.service.productAndCategory.implementation;
 
 import com.postershop.backend.entity.Category;
+import com.postershop.backend.entity.Product;
 import com.postershop.backend.entity.enums.AvailabilityStatus;
 import com.postershop.backend.repository.CategoryRepository;
+import com.postershop.backend.repository.ProductRepository;
 import com.postershop.backend.service.productAndCategory.CategoryService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -13,8 +16,10 @@ import java.util.List;
 public class CategoryServiceImp implements CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
 
-    public CategoryServiceImp(CategoryRepository categoryRepository) {
+    public CategoryServiceImp(CategoryRepository categoryRepository, ProductRepository productRepository) {
+        this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
     }
 
@@ -85,6 +90,38 @@ public class CategoryServiceImp implements CategoryService {
 
         return categoryRepository.save(existingCategory);
     }
+
+
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    @Transactional
+    @Override
+    public void deleteCategory(Long id) {
+
+        if (!categoryRepository.existsById(id)) {
+            throw new RuntimeException("Category not found");
+        }
+
+        Category category = getCategoryById(id);
+
+        List<Product> productsInCategory = categoryRepository.findProductsByCategoryId(id);
+
+        if(productsInCategory == null && productsInCategory.isEmpty()) {
+
+            categoryRepository.deleteById(id);
+            return;
+
+        }
+
+        for (Product product : productsInCategory) {
+            product.setStatus(AvailabilityStatus.NOT_AVAILABLE);
+            productRepository.save(product);
+        }
+
+
+        category.setStatus(AvailabilityStatus.NOT_AVAILABLE);
+        categoryRepository.save(category);
+    }
+// ...
 
 
 }

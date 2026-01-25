@@ -5,6 +5,7 @@ import com.postershop.backend.service.productAndCategory.ProductService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -30,9 +31,12 @@ public class ProductController {
 
     // Create a new product : ADMIN ONLY
     @PostMapping("/add")
-    public ResponseEntity<Product> createProduct(@RequestBody Product product, @RequestParam Long categoryId) {
+    public ResponseEntity<Product> createProduct(@RequestBody Product product,
+                                                 @RequestParam Long categoryId,
+                                                 @RequestParam(name = "imageFile" , required = false) MultipartFile imageFile
+    ) {
         log.info("Received request to create product: {}", product.getName());
-        Product createdProduct = productService.createProduct(product, categoryId);
+        Product createdProduct = productService.createProduct(product,imageFile, categoryId);
         log.info("Created product with ID: {}", createdProduct.getId());
         return ResponseEntity.ok(createdProduct);
     }
@@ -54,4 +58,13 @@ public class ProductController {
         log.info("Updated product with ID: {}", product.getId());
         return ResponseEntity.ok(product);
     }
+
+    // Delete product : ADMIN ONLY
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+        log.info("Received request to delete product ID: {}", id);
+        productService.deleteProduct(id);
+        return ResponseEntity.noContent().build();
+    }
+
 }
