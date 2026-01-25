@@ -3,7 +3,9 @@ package com.postershop.backend.service.order.implementation;
 import com.postershop.backend.dto.order.OrderRequest;
 import com.postershop.backend.entity.*;
 import com.postershop.backend.entity.enums.OrderStatus;
+import com.postershop.backend.entity.enums.PaymentStatus;
 import com.postershop.backend.repository.OrderRepository;
+import com.postershop.backend.repository.PaymentCardsRepository;
 import com.postershop.backend.repository.ProductRepository;
 import com.postershop.backend.repository.UserRepository;
 import com.postershop.backend.service.order.OrderService;
@@ -12,6 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -23,8 +26,10 @@ public class OrderServiceImp implements OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final PaymentCardsRepository paymentCardsRepository;
 
-    public OrderServiceImp(OrderRepository orderRepository, ProductRepository productRepository, UserRepository userRepository) {
+    public OrderServiceImp(OrderRepository orderRepository, ProductRepository productRepository, UserRepository userRepository, PaymentCardsRepository paymentCardsRepository) {
+        this.paymentCardsRepository = paymentCardsRepository;
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
@@ -43,6 +48,18 @@ public class OrderServiceImp implements OrderService {
         String username = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+
+        PaymentCards paymentCard = paymentCardsRepository.findById(request.paymentCardId())
+                .orElseThrow(() -> new IllegalArgumentException("Payment card not found: " + request.paymentCardId()));
+
+        if(!paymentCard.getUser().getId().equals(user.getId())){
+            throw new IllegalArgumentException("Invalid Card Selected");
+        }
+
+        if(!paymentCard.getCvv().equals(request.cvv())){
+            throw new IllegalArgumentException("Invalid CVV");
+        }
 
         // Order Object Creation
         ShopOrder order = new ShopOrder();
@@ -70,6 +87,7 @@ public class OrderServiceImp implements OrderService {
                 .toList();
 
         order.setItems(orderItems);
+        order.setOrderDate(LocalDateTime.now());
 
         // Calculation Total Amount using Stream Reduction
         double total = orderItems.stream()
@@ -78,12 +96,18 @@ public class OrderServiceImp implements OrderService {
 
         order.setTotalAmount(total);
 
-        //  Payment (Encryption happens automatically via JPA Converter)
-        Payment payment = new Payment();
-        payment.setCardNumber(request.cardNumber());
-        payment.setCardHolderName(request.cardHolder());
-        payment.setExpiryDate(request.expiryDate());
-        order.setPayment(payment);
+        // Payment Details
+        OrderPaymentDetails paymentDetails = new OrderPaymentDetails();
+        paymentDetails.setShopOrder(order);
+        paymentDetails.setSavedCard(paymentCard);
+        paymentDetails.setPaymentDate(LocalDateTime.now());
+        paymentDetails.setAmount(total);
+        paymentDetails.setPaymentStatus(PaymentStatus.SUCCESS);
+
+
+        order.setPaymentDetails(paymentDetails);
+
+        //  PaymentCards (Encryption happens automatically via JPA Converter)
 
         return orderRepository.save(order);
     }

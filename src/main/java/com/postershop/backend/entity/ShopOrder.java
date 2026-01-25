@@ -33,8 +33,7 @@ public class ShopOrder {
     @OneToMany(mappedBy = "shopOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
 
-    // One Order has One Payment
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "payment_id", referencedColumnName = "id")
-    private Payment payment;
+
+    @OneToOne(mappedBy = "shopOrder", cascade = CascadeType.ALL)
+    private OrderPaymentDetails paymentDetails;
 }

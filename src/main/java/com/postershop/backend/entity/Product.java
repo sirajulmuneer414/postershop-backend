@@ -24,6 +24,8 @@ public class Product {
     @Column(nullable = false)
     private Integer stock;
 
+    private String imageUrl;
+
     @Column(nullable = false)
     private AvailabilityStatus status;
 

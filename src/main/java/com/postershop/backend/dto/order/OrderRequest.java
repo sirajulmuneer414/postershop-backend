@@ -4,8 +4,6 @@ import java.util.List;
 
 public record OrderRequest(
         List<OrderItemRequest> items,
-        String cardNumber,
-        String cardHolder,
-        String expiryDate,
+        Long paymentCardId,
         String cvv
 ) {}
